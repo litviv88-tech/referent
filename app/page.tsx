@@ -1,8 +1,9 @@
+import ArticleAnalyzer from "./components/article-analyzer";
+
 export default function Home() {
   return (
-    <main>
-      <h1>Referent</h1>
-      <p>Минимальное приложение на Next.js</p>
+    <main className="min-h-screen bg-slate-100 px-4 py-10 sm:px-6 lg:px-8">
+      <ArticleAnalyzer />
     </main>
   );
 }

@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Referent",
-  description: "Минимальное приложение на Next.js",
+  description: "Анализ англоязычных и русскоязычных статей с помощью AI",
 };
 
 export default function RootLayout({
@@ -13,7 +13,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru">
-      <body>{children}</body>
+      <body className="antialiased text-slate-900">{children}</body>
     </html>
   );
 }
