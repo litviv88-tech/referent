@@ -12,25 +12,24 @@ export async function fetchJson<T>(
     );
   }
 
-  const contentType = response.headers.get("content-type") ?? "";
+  const text = await response.text();
+  const trimmed = text.trim();
 
-  if (!contentType.includes("application/json")) {
-    const text = await response.text();
+  if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+    const data = JSON.parse(trimmed) as T & { error?: string };
 
-    if (text.startsWith("<!DOCTYPE") || text.startsWith("<html")) {
-      throw new Error(
-        "API вернул HTML вместо JSON. Пересоберите проект (npm run build) и перезапустите сервер (npm run dev).",
-      );
+    if (!response.ok) {
+      throw new Error(data.error ?? `Ошибка запроса: HTTP ${response.status}`);
     }
 
-    throw new Error(text.slice(0, 200) || "API вернул неожиданный ответ.");
+    return data;
   }
 
-  const data = (await response.json()) as T & { error?: string };
-
-  if (!response.ok) {
-    throw new Error(data.error ?? `Ошибка запроса: HTTP ${response.status}`);
+  if (trimmed.startsWith("<!DOCTYPE") || trimmed.startsWith("<html")) {
+    throw new Error(
+      "Сервер вернул HTML вместо JSON. Очистите кэш и перезапустите: Remove-Item -Recurse -Force .next; npm run dev",
+    );
   }
 
-  return data;
+  throw new Error(trimmed.slice(0, 200) || "API вернул неожиданный ответ.");
 }

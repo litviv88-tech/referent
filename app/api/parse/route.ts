@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { parseArticle } from "@/lib/parse-article";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as { url?: string };
