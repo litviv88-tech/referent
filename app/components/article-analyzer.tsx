@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { fetchJson } from "@/lib/fetch-json";
 
 type Action = "summary" | "theses" | "telegram" | "image" | "plagiarism";
 
@@ -33,19 +34,11 @@ function isValidUrl(value: string): boolean {
 }
 
 async function parseArticle(url: string): Promise<ParsedArticle> {
-  const response = await fetch("/api/parse", {
+  return fetchJson<ParsedArticle>("/api/parse", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ url }),
   });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.error ?? "Ошибка парсинга статьи.");
-  }
-
-  return data as ParsedArticle;
 }
 
 export default function ArticleAnalyzer() {
@@ -75,17 +68,15 @@ export default function ArticleAnalyzer() {
       }
 
       if (action === "plagiarism") {
-        const response = await fetch("/api/plagiarism", {
+        const data = await fetchJson<{
+          percent: number;
+          method: string;
+          details: string;
+        }>("/api/plagiarism", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ content: article.content }),
         });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error ?? "Ошибка проверки на плагиат.");
-        }
 
         setResult({
           type: "plagiarism",
@@ -97,20 +88,17 @@ export default function ArticleAnalyzer() {
       }
 
       if (action === "image") {
-        const response = await fetch("/api/image", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title: article.title,
-            content: article.content,
-          }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error ?? "Ошибка генерации изображения.");
-        }
+        const data = await fetchJson<{ url: string; alt: string }>(
+          "/api/image",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              title: article.title,
+              content: article.content,
+            }),
+          },
+        );
 
         setResult({
           type: "image",
