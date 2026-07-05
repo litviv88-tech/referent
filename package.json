@@ -9,16 +9,24 @@
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.3.2",
+    "cheerio": "^1.2.0",
+    "metascraper": "^5.51.1",
+    "metascraper-date": "^5.51.1",
+    "metascraper-title": "^5.51.1",
     "next": "^15.3.4",
+    "openai": "^6.45.0",
+    "plagiarism-checker": "^6.0.0",
     "postcss": "^8.5.16",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "string-similarity": "^4.0.4",
     "tailwindcss": "^4.3.2"
   },
   "devDependencies": {
     "@types/node": "^22.15.29",
     "@types/react": "^19.1.6",
     "@types/react-dom": "^19.1.5",
+    "@types/string-similarity": "^4.0.2",
     "typescript": "^5.8.3"
   }
 }

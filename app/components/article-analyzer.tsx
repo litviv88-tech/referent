@@ -4,9 +4,15 @@ import { useState } from "react";
 
 type Action = "summary" | "theses" | "telegram" | "image" | "plagiarism";
 
+type ParsedArticle = {
+  date: string | null;
+  title: string;
+  content: string;
+};
+
 type Result =
-  | { type: "text"; content: string }
-  | { type: "plagiarism"; percent: number }
+  | { type: "json"; data: ParsedArticle }
+  | { type: "plagiarism"; percent: number; method: string; details: string }
   | { type: "image"; url: string; alt: string };
 
 const ACTIONS: { id: Action; label: string }[] = [
@@ -24,6 +30,22 @@ function isValidUrl(value: string): boolean {
   } catch {
     return false;
   }
+}
+
+async function parseArticle(url: string): Promise<ParsedArticle> {
+  const response = await fetch("/api/parse", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error ?? "Ошибка парсинга статьи.");
+  }
+
+  return data as ParsedArticle;
 }
 
 export default function ArticleAnalyzer() {
@@ -44,47 +66,71 @@ export default function ArticleAnalyzer() {
     setLoading(true);
     setResult(null);
 
-    // Заглушка до подключения API парсинга и AI
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    try {
+      const article = await parseArticle(url);
 
-    switch (action) {
-      case "summary":
-        setResult({
-          type: "text",
-          content:
-            "Здесь появится краткое описание статьи после подключения AI и парсинга URL.",
+      if (action === "summary" || action === "theses" || action === "telegram") {
+        setResult({ type: "json", data: article });
+        return;
+      }
+
+      if (action === "plagiarism") {
+        const response = await fetch("/api/plagiarism", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: article.content }),
         });
-        break;
-      case "theses":
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error ?? "Ошибка проверки на плагиат.");
+        }
+
         setResult({
-          type: "text",
-          content:
-            "• Тезис 1\n• Тезис 2\n• Тезис 3\n\nТезисы будут сгенерированы после подключения AI.",
+          type: "plagiarism",
+          percent: data.percent,
+          method: data.method,
+          details: data.details,
         });
-        break;
-      case "telegram":
-        setResult({
-          type: "text",
-          content:
-            "📌 Заголовок поста\n\nКраткий анонс статьи для Telegram появится здесь после подключения AI.",
+        return;
+      }
+
+      if (action === "image") {
+        const response = await fetch("/api/image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: article.title,
+            content: article.content,
+          }),
         });
-        break;
-      case "image":
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error ?? "Ошибка генерации изображения.");
+        }
+
         setResult({
           type: "image",
-          url: "https://placehold.co/800x450/e2e8f0/64748b?text=Referent",
-          alt: "Сгенерированное изображение к статье",
+          url: data.url,
+          alt: data.alt,
         });
-        break;
-      case "plagiarism":
-        setResult({ type: "plagiarism", percent: 0 });
-        break;
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Неизвестная ошибка.");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   }
 
-  const urlIsValid = url.trim().length > 0 && isValidUrl(url);
+  const loadingLabel =
+    activeAction === "plagiarism"
+      ? "Проверка на плагиат…"
+      : activeAction === "image"
+        ? "Генерация изображения…"
+        : "Парсинг статьи…";
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-8">
@@ -99,7 +145,10 @@ export default function ArticleAnalyzer() {
       </header>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <label htmlFor="article-url" className="mb-2 block text-sm font-medium text-slate-700">
+        <label
+          htmlFor="article-url"
+          className="mb-2 block text-sm font-medium text-slate-700"
+        >
           URL статьи
         </label>
         <input
@@ -151,31 +200,37 @@ export default function ArticleAnalyzer() {
         {loading && (
           <div className="flex items-center gap-3 text-slate-600">
             <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-700" />
-            Генерация ответа…
+            {loadingLabel}
           </div>
         )}
 
-        {!loading && result?.type === "text" && (
-          <div className="whitespace-pre-wrap text-slate-800">{result.content}</div>
+        {!loading && result?.type === "json" && (
+          <pre className="overflow-x-auto rounded-xl bg-slate-900 p-4 text-sm leading-relaxed text-slate-100">
+            {JSON.stringify(result.data, null, 2)}
+          </pre>
         )}
 
         {!loading && result?.type === "plagiarism" && (
           <div className="space-y-2">
-            <p className="text-4xl font-semibold text-slate-900">{result.percent}%</p>
-            <p className="text-slate-600">Оценка плагиата (данные появятся после подключения API).</p>
+            <p className="text-4xl font-semibold text-slate-900">
+              {result.percent}%
+            </p>
+            <p className="text-sm text-slate-500">
+              Метод: {result.method === "copyleaks" ? "Copyleaks" : "локальный"}
+            </p>
+            <p className="text-slate-600">{result.details}</p>
           </div>
         )}
 
         {!loading && result?.type === "image" && (
           <figure className="space-y-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={result.url}
               alt={result.alt}
               className="max-w-full rounded-xl border border-slate-200"
             />
             <figcaption className="text-sm text-slate-500">
-              Изображение к статье (заглушка до подключения генерации).
+              {result.alt}
             </figcaption>
           </figure>
         )}
