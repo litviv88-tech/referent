@@ -3,7 +3,13 @@
 import { useState } from "react";
 import { fetchJson } from "@/lib/fetch-json";
 
-type Action = "summary" | "theses" | "telegram" | "image" | "plagiarism";
+type Action =
+  | "summary"
+  | "theses"
+  | "telegram"
+  | "translate"
+  | "image"
+  | "plagiarism";
 
 type ParsedArticle = {
   date: string | null;
@@ -20,6 +26,7 @@ const ACTIONS: { id: Action; label: string }[] = [
   { id: "summary", label: "О чем статья" },
   { id: "theses", label: "Тезисы" },
   { id: "telegram", label: "Пост для Telegram" },
+  { id: "translate", label: "Перевод" },
   { id: "image", label: "Изображение" },
   { id: "plagiarism", label: "Плагиат" },
 ];
@@ -60,6 +67,17 @@ export default function ArticleAnalyzer() {
     setResult(null);
 
     try {
+      if (action === "translate") {
+        const data = await fetchJson<ParsedArticle>("/api/translate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url }),
+        });
+
+        setResult({ type: "json", data });
+        return;
+      }
+
       const article = await parseArticle(url);
 
       if (action === "summary" || action === "theses" || action === "telegram") {
@@ -114,11 +132,13 @@ export default function ArticleAnalyzer() {
   }
 
   const loadingLabel =
-    activeAction === "plagiarism"
-      ? "Проверка на плагиат…"
-      : activeAction === "image"
-        ? "Генерация изображения…"
-        : "Парсинг статьи…";
+    activeAction === "translate"
+      ? "Перевод статьи…"
+      : activeAction === "plagiarism"
+        ? "Проверка на плагиат…"
+        : activeAction === "image"
+          ? "Генерация изображения…"
+          : "Парсинг статьи…";
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-8">
@@ -204,7 +224,10 @@ export default function ArticleAnalyzer() {
               {result.percent}%
             </p>
             <p className="text-sm text-slate-500">
-              Метод: {result.method === "copyleaks" ? "Copyleaks" : "локальный"}
+              Метод:{" "}
+              {result.method === "openrouter-rerank"
+                ? "OpenRouter Rerank"
+                : "локальный"}
             </p>
             <p className="text-slate-600">{result.details}</p>
           </div>

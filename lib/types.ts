@@ -6,7 +6,7 @@ export type ParsedArticle = {
 
 export type PlagiarismResult = {
   percent: number;
-  method: "copyleaks" | "local";
+  method: "openrouter-rerank" | "local";
   details: string;
 };
 

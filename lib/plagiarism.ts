@@ -1,17 +1,22 @@
 import { compareTwoStrings } from "string-similarity";
-import {
-  Copyleaks,
-  CopyleaksFileSubmissionModel,
-} from "plagiarism-checker";
+import { openRouterFetch } from "./openrouter";
 import type { PlagiarismResult } from "./types";
 
+const PLAGIARISM_MODEL =
+  process.env.OPENROUTER_PLAGIARISM_MODEL ??
+  "nvidia/llama-nemotron-reranker-1b-v2";
+
 const SIMILARITY_THRESHOLD = 0.85;
+const RERANK_THRESHOLD = 0.8;
+const MAX_SENTENCES = 20;
+const MAX_CHECKS = 8;
 
 function splitSentences(text: string): string[] {
   return text
     .split(/(?<=[.!?…])\s+|\n+/u)
     .map((sentence) => sentence.trim())
-    .filter((sentence) => sentence.length > 30);
+    .filter((sentence) => sentence.length > 30)
+    .slice(0, MAX_SENTENCES);
 }
 
 function checkPlagiarismLocal(content: string): PlagiarismResult {
@@ -21,7 +26,7 @@ function checkPlagiarismLocal(content: string): PlagiarismResult {
     return {
       percent: 0,
       method: "local",
-      details: "Недостаточно текста для локального анализа (string-similarity).",
+      details: "Недостаточно текста для локального анализа.",
     };
   }
 
@@ -49,38 +54,74 @@ function checkPlagiarismLocal(content: string): PlagiarismResult {
     method: "local",
     details:
       similarPairs > 0
-        ? `Найдено ${similarPairs} пар похожих предложений (string-similarity).`
+        ? `Найдено ${similarPairs} пар похожих предложений (локальный анализ).`
         : "Явных повторов и дубликатов предложений не обнаружено.",
   };
 }
 
-async function submitToCopyleaks(content: string): Promise<boolean> {
-  const email = process.env.COPYLEAKS_EMAIL;
-  const apiKey = process.env.COPYLEAKS_API_KEY;
-  const webhookUrl = process.env.COPYLEAKS_WEBHOOK_URL;
+type RerankResponse = {
+  results?: Array<{ index: number; relevance_score: number }>;
+};
 
-  if (!email || !apiKey || !webhookUrl) {
-    return false;
+async function rerankSimilarity(
+  query: string,
+  documents: string[],
+): Promise<number> {
+  const data = await openRouterFetch<RerankResponse>("/rerank", {
+    method: "POST",
+    body: JSON.stringify({
+      model: PLAGIARISM_MODEL,
+      query,
+      documents,
+      top_n: Math.min(3, documents.length),
+    }),
+  });
+
+  return data.results?.[0]?.relevance_score ?? 0;
+}
+
+async function checkPlagiarismOpenRouter(
+  content: string,
+): Promise<PlagiarismResult> {
+  const sentences = splitSentences(content);
+
+  if (sentences.length < 2) {
+    return {
+      percent: 0,
+      method: "openrouter-rerank",
+      details: "Недостаточно текста для анализа через rerank-модель.",
+    };
   }
 
-  const copyleaks = new Copyleaks();
-  const authToken = await copyleaks.loginAsync(email, apiKey);
-  const scanId = crypto.randomUUID();
-  const base64 = Buffer.from(content, "utf-8").toString("base64");
+  let similarChecks = 0;
+  let totalChecks = 0;
 
-  const submission = new CopyleaksFileSubmissionModel(
-    base64,
-    "article.txt",
-    {
-      sandbox: true,
-      webhooks: {
-        status: `${webhookUrl}/webhook/{STATUS}`,
-      },
-    },
-  );
+  for (let i = 0; i < Math.min(sentences.length, MAX_CHECKS); i++) {
+    const others = sentences.filter((_, index) => index !== i);
 
-  await copyleaks.submitFileAsync(authToken, scanId, submission);
-  return true;
+    if (others.length === 0) {
+      continue;
+    }
+
+    const score = await rerankSimilarity(sentences[i], others);
+    totalChecks++;
+
+    if (score >= RERANK_THRESHOLD) {
+      similarChecks++;
+    }
+  }
+
+  const percent =
+    totalChecks > 0 ? Math.round((similarChecks / totalChecks) * 100) : 0;
+
+  return {
+    percent,
+    method: "openrouter-rerank",
+    details:
+      similarChecks > 0
+        ? `Модель ${PLAGIARISM_MODEL} нашла ${similarChecks} из ${totalChecks} фрагментов с высоким сходством.`
+        : "Rerank-модель не обнаружила явных дубликатов в тексте.",
+  };
 }
 
 export async function checkPlagiarism(content: string): Promise<PlagiarismResult> {
@@ -88,20 +129,13 @@ export async function checkPlagiarism(content: string): Promise<PlagiarismResult
     throw new Error("Нет текста для проверки на плагиат.");
   }
 
-  const localResult = checkPlagiarismLocal(content);
-
-  try {
-    const submitted = await submitToCopyleaks(content);
-    if (submitted) {
-      return {
-        ...localResult,
-        method: "copyleaks",
-        details: `${localResult.details} Текст также отправлен в Copyleaks (plagiarism-checker); результат придёт на webhook.`,
-      };
+  if (process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY) {
+    try {
+      return await checkPlagiarismOpenRouter(content);
+    } catch {
+      return checkPlagiarismLocal(content);
     }
-  } catch {
-    // Локальный анализ остаётся основным результатом.
   }
 
-  return localResult;
+  return checkPlagiarismLocal(content);
 }

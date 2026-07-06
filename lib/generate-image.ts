@@ -1,5 +1,19 @@
-import OpenAI from "openai";
+import { getOpenRouterBaseUrl, getOpenRouterHeaders } from "./openrouter";
 import type { ImageResult } from "./types";
+
+const DEFAULT_IMAGE_MODEL = "x-ai/grok-imagine-image-quality";
+
+function getImageModel(): string {
+  const model = process.env.OPENROUTER_IMAGE_MODEL ?? DEFAULT_IMAGE_MODEL;
+
+  if (model === "openrouter/auto") {
+    throw new Error(
+      'Модель openrouter/auto не поддерживает изображения. Укажите OPENROUTER_IMAGE_MODEL=x-ai/grok-imagine-image-quality в .env.local',
+    );
+  }
+
+  return model;
+}
 
 function buildPrompt(title: string, content: string): string {
   const excerpt = content.slice(0, 400).trim();
@@ -12,32 +26,58 @@ function buildPrompt(title: string, content: string): string {
     .join(" ");
 }
 
+type ImageApiResponse = {
+  data?: Array<{ url?: string; b64_json?: string }>;
+};
+
 export async function generateArticleImage(
   title: string,
   content: string,
 ): Promise<ImageResult> {
-  const apiKey = process.env.OPENAI_API_KEY;
-
-  if (!apiKey) {
-    throw new Error(
-      "Укажите OPENAI_API_KEY в .env.local для генерации изображений.",
-    );
-  }
-
-  const openai = new OpenAI({ apiKey });
   const prompt = buildPrompt(title, content);
+  const model = getImageModel();
+  const baseUrl = getOpenRouterBaseUrl();
 
-  const response = await openai.images.generate({
-    model: "dall-e-3",
-    prompt,
-    n: 1,
-    size: "1024x1024",
+  const response = await fetch(`${baseUrl}/images`, {
+    method: "POST",
+    headers: getOpenRouterHeaders(),
+    body: JSON.stringify({
+      model,
+      prompt,
+      n: 1,
+      resolution: "1K",
+      aspect_ratio: "16:9",
+    }),
   });
 
-  const url = response.data?.[0]?.url;
+  const text = await response.text();
+  const trimmed = text.trim();
+
+  if (!response.ok) {
+    let message = `Ошибка генерации изображения: HTTP ${response.status}`;
+
+    if (trimmed.startsWith("{")) {
+      try {
+        const data = JSON.parse(trimmed) as { error?: { message?: string } };
+        message = data.error?.message ?? message;
+      } catch {
+        // ignore
+      }
+    }
+
+    throw new Error(message);
+  }
+
+  const data = JSON.parse(trimmed) as ImageApiResponse;
+  const image = data.data?.[0];
+  const url =
+    image?.url ??
+    (image?.b64_json ? `data:image/png;base64,${image.b64_json}` : null);
 
   if (!url) {
-    throw new Error("OpenAI не вернул URL изображения.");
+    throw new Error(
+      `Модель ${model} не вернула изображение. Проверьте OPENROUTER_API_KEY в .env.local`,
+    );
   }
 
   return {
