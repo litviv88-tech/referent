@@ -14,3 +14,15 @@ export type ImageResult = {
   url: string;
   alt: string;
 };
+
+export type SummaryResult = {
+  text: string;
+};
+
+export type ThesesResult = {
+  items: string[];
+};
+
+export type TelegramPostResult = {
+  text: string;
+};

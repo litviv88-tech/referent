@@ -18,7 +18,10 @@ type ParsedArticle = {
 };
 
 type Result =
-  | { type: "json"; data: ParsedArticle }
+  | { type: "text"; text: string }
+  | { type: "theses"; items: string[] }
+  | { type: "telegram"; text: string }
+  | { type: "article"; data: ParsedArticle }
   | { type: "plagiarism"; percent: number; method: string; details: string }
   | { type: "image"; url: string; alt: string };
 
@@ -30,6 +33,15 @@ const ACTIONS: { id: Action; label: string }[] = [
   { id: "image", label: "Изображение" },
   { id: "plagiarism", label: "Плагиат" },
 ];
+
+const LOADING_LABELS: Record<Action, string> = {
+  summary: "Генерация описания…",
+  theses: "Формирование тезисов…",
+  telegram: "Создание поста…",
+  translate: "Перевод статьи…",
+  image: "Генерация изображения…",
+  plagiarism: "Проверка на плагиат…",
+};
 
 function isValidUrl(value: string): boolean {
   try {
@@ -54,6 +66,7 @@ export default function ArticleAnalyzer() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<Result | null>(null);
+  const [copied, setCopied] = useState(false);
 
   async function handleAction(action: Action) {
     if (!isValidUrl(url)) {
@@ -62,28 +75,53 @@ export default function ArticleAnalyzer() {
     }
 
     setError(null);
+    setCopied(false);
     setActiveAction(action);
     setLoading(true);
     setResult(null);
 
     try {
+      if (action === "summary") {
+        const data = await fetchJson<{ text: string }>("/api/summary", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url }),
+        });
+        setResult({ type: "text", text: data.text });
+        return;
+      }
+
+      if (action === "theses") {
+        const data = await fetchJson<{ items: string[] }>("/api/theses", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url }),
+        });
+        setResult({ type: "theses", items: data.items });
+        return;
+      }
+
+      if (action === "telegram") {
+        const data = await fetchJson<{ text: string }>("/api/telegram", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url }),
+        });
+        setResult({ type: "telegram", text: data.text });
+        return;
+      }
+
       if (action === "translate") {
         const data = await fetchJson<ParsedArticle>("/api/translate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ url }),
         });
-
-        setResult({ type: "json", data });
+        setResult({ type: "article", data });
         return;
       }
 
       const article = await parseArticle(url);
-
-      if (action === "summary" || action === "theses" || action === "telegram") {
-        setResult({ type: "json", data: article });
-        return;
-      }
 
       if (action === "plagiarism") {
         const data = await fetchJson<{
@@ -131,14 +169,13 @@ export default function ArticleAnalyzer() {
     }
   }
 
-  const loadingLabel =
-    activeAction === "translate"
-      ? "Перевод статьи…"
-      : activeAction === "plagiarism"
-        ? "Проверка на плагиат…"
-        : activeAction === "image"
-          ? "Генерация изображения…"
-          : "Парсинг статьи…";
+  async function handleCopy(text: string) {
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  const loadingLabel = activeAction ? LOADING_LABELS[activeAction] : "";
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-8">
@@ -212,10 +249,49 @@ export default function ArticleAnalyzer() {
           </div>
         )}
 
-        {!loading && result?.type === "json" && (
-          <pre className="overflow-x-auto rounded-xl bg-slate-900 p-4 text-sm leading-relaxed text-slate-100">
-            {JSON.stringify(result.data, null, 2)}
-          </pre>
+        {!loading && result?.type === "text" && (
+          <p className="whitespace-pre-wrap text-base leading-relaxed text-slate-800">
+            {result.text}
+          </p>
+        )}
+
+        {!loading && result?.type === "theses" && (
+          <ol className="list-decimal space-y-2 pl-5 text-slate-800">
+            {result.items.map((item, index) => (
+              <li key={index} className="leading-relaxed">
+                {item}
+              </li>
+            ))}
+          </ol>
+        )}
+
+        {!loading && result?.type === "telegram" && (
+          <div className="space-y-4">
+            <p className="whitespace-pre-wrap text-base leading-relaxed text-slate-800">
+              {result.text}
+            </p>
+            <button
+              type="button"
+              onClick={() => handleCopy(result.text)}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+            >
+              {copied ? "Скопировано" : "Копировать"}
+            </button>
+          </div>
+        )}
+
+        {!loading && result?.type === "article" && (
+          <article className="space-y-4">
+            {result.data.date && (
+              <time className="text-sm text-slate-500">{result.data.date}</time>
+            )}
+            <h3 className="text-xl font-semibold text-slate-900">
+              {result.data.title}
+            </h3>
+            <p className="whitespace-pre-wrap text-base leading-relaxed text-slate-800">
+              {result.data.content}
+            </p>
+          </article>
         )}
 
         {!loading && result?.type === "plagiarism" && (
