@@ -57,7 +57,7 @@ describe("parseArticleHtml", () => {
 
     assert.equal(result.title, "Заголовок из og:title");
     assert.ok(result.date);
-    assert.match(result.date!, /2024-03-1[45]/);
+    assert.match(result.date!, /2024-03-14/);
     assert.ok(result.content.length >= 200);
     assert.match(result.content, /первый абзац/);
   });

@@ -12,9 +12,6 @@
   "dependencies": {
     "@tailwindcss/postcss": "^4.3.2",
     "cheerio": "^1.2.0",
-    "metascraper": "^5.51.1",
-    "metascraper-date": "^5.51.1",
-    "metascraper-title": "^5.51.1",
     "next": "^15.3.4",
     "openai": "^6.45.0",
     "plagiarism-checker": "^6.0.0",

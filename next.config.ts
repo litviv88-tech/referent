@@ -1,11 +1,5 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
-  serverExternalPackages: [
-    "metascraper",
-    "metascraper-title",
-    "metascraper-date",
-  ],
-};
+const nextConfig: NextConfig = {};
 
 export default nextConfig;

@@ -27,7 +27,7 @@ export async function fetchJson<T>(
 
   if (trimmed.startsWith("<!DOCTYPE") || trimmed.startsWith("<html")) {
     throw new Error(
-      "Сервер вернул HTML вместо JSON. Очистите кэш и перезапустите: Remove-Item -Recurse -Force .next; npm run dev",
+      "Ошибка сервера API. Подождите минуту и попробуйте снова. Если ошибка повторяется — перезапустите деплой на Vercel.",
     );
   }
 

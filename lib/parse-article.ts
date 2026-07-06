@@ -1,10 +1,5 @@
 import * as cheerio from "cheerio";
-import metascraper from "metascraper";
-import metascraperTitle from "metascraper-title";
-import metascraperDate from "metascraper-date";
 import type { ParsedArticle } from "./types";
-
-const scraper = metascraper([metascraperTitle(), metascraperDate()]);
 
 export const CONTENT_SELECTORS = [
   "article",
@@ -19,11 +14,14 @@ export const CONTENT_SELECTORS = [
   ".article",
   "#content",
   ".story-body",
+  ".l-entry__content",
+  ".content--full",
 ];
 
 const DATE_SELECTORS = [
   "time[datetime]",
   'meta[property="article:published_time"]',
+  'meta[property="og:updated_time"]',
   'meta[name="pubdate"]',
   'meta[name="date"]',
   ".date",
@@ -108,15 +106,10 @@ export function extractContentFromHtml(html: string): string {
 
 export async function parseArticleHtml(
   html: string,
-  url: string,
+  _url: string,
 ): Promise<ParsedArticle> {
-  const metadata = await scraper({ html, url });
-
-  const title =
-    normalizeText(metadata.title ?? "") || extractTitleFromHtml(html);
-  const date = metadata.date
-    ? normalizeText(metadata.date)
-    : extractDateFromHtml(html);
+  const title = extractTitleFromHtml(html);
+  const date = extractDateFromHtml(html);
   const content = extractContentFromHtml(html);
 
   if (!title && !content) {
@@ -134,7 +127,7 @@ function formatFetchError(error: unknown, url: string): string {
   const cause = error.cause as { code?: string } | undefined;
 
   if (cause?.code === "UND_ERR_CONNECT_TIMEOUT") {
-    return `Сайт ${new URL(url).hostname} недоступен с сервера (таймаут). Попробуйте другой URL или проверьте VPN/сеть.`;
+    return `Сайт ${new URL(url).hostname} недоступен с сервера (таймаут). Попробуйте другой URL.`;
   }
 
   if (error.message === "fetch failed") {
@@ -142,7 +135,7 @@ function formatFetchError(error: unknown, url: string): string {
   }
 
   if (error.name === "TimeoutError") {
-    return "Превышено время ожидания ответа от сайта (15 с).";
+    return "Превышено время ожидания ответа от сайта (20 с).";
   }
 
   return error.message;
