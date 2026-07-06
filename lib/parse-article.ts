@@ -1,4 +1,5 @@
 import * as cheerio from "cheerio";
+import { API_ERROR_CODES, AppError } from "./errors";
 import type { ParsedArticle } from "./types";
 
 export const CONTENT_SELECTORS = [
@@ -113,32 +114,10 @@ export async function parseArticleHtml(
   const content = extractContentFromHtml(html);
 
   if (!title && !content) {
-    throw new Error("Не удалось извлечь заголовок и содержимое статьи.");
+    throw new AppError(API_ERROR_CODES.ARTICLE_PARSE_FAILED, 422);
   }
 
   return { date, title, content };
-}
-
-function formatFetchError(error: unknown, url: string): string {
-  if (!(error instanceof Error)) {
-    return "Не удалось загрузить страницу.";
-  }
-
-  const cause = error.cause as { code?: string } | undefined;
-
-  if (cause?.code === "UND_ERR_CONNECT_TIMEOUT") {
-    return `Сайт ${new URL(url).hostname} недоступен с сервера (таймаут). Попробуйте другой URL.`;
-  }
-
-  if (error.message === "fetch failed") {
-    return `Не удалось подключиться к ${new URL(url).hostname}. Проверьте URL и доступность сайта.`;
-  }
-
-  if (error.name === "TimeoutError") {
-    return "Превышено время ожидания ответа от сайта (20 с).";
-  }
-
-  return error.message;
 }
 
 export async function parseArticle(url: string): Promise<ParsedArticle> {
@@ -150,12 +129,12 @@ export async function parseArticle(url: string): Promise<ParsedArticle> {
       signal: AbortSignal.timeout(20000),
       redirect: "follow",
     });
-  } catch (error) {
-    throw new Error(formatFetchError(error, url));
+  } catch {
+    throw new AppError(API_ERROR_CODES.ARTICLE_FETCH_FAILED, 502);
   }
 
   if (!response.ok) {
-    throw new Error(`Не удалось загрузить страницу: HTTP ${response.status}`);
+    throw new AppError(API_ERROR_CODES.ARTICLE_FETCH_FAILED, 502);
   }
 
   const html = await response.text();

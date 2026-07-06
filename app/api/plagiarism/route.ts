@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { API_ERROR_CODES, AppError } from "@/lib/errors";
 import { checkPlagiarism } from "@/lib/plagiarism";
+import { toErrorResponse } from "@/lib/route-error";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,17 +12,12 @@ export async function POST(request: Request) {
     const content = body.content?.trim();
 
     if (!content) {
-      return NextResponse.json(
-        { error: "Текст статьи обязателен." },
-        { status: 400 },
-      );
+      throw new AppError(API_ERROR_CODES.MISSING_CONTENT, 400);
     }
 
     const result = await checkPlagiarism(content);
     return NextResponse.json(result);
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Ошибка проверки на плагиат.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return toErrorResponse(error);
   }
 }

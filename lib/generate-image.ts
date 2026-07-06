@@ -1,3 +1,4 @@
+import { API_ERROR_CODES, AppError } from "./errors";
 import { getOpenRouterBaseUrl, getOpenRouterHeaders } from "./openrouter";
 import type { ImageResult } from "./types";
 
@@ -7,9 +8,7 @@ function getImageModel(): string {
   const model = process.env.OPENROUTER_IMAGE_MODEL ?? DEFAULT_IMAGE_MODEL;
 
   if (model === "openrouter/auto") {
-    throw new Error(
-      'Модель openrouter/auto не поддерживает изображения. Укажите OPENROUTER_IMAGE_MODEL=x-ai/grok-imagine-image-quality в .env.local',
-    );
+    throw new AppError(API_ERROR_CODES.AI_UNAVAILABLE, 500);
   }
 
   return model;
@@ -54,18 +53,7 @@ export async function generateArticleImage(
   const trimmed = text.trim();
 
   if (!response.ok) {
-    let message = `Ошибка генерации изображения: HTTP ${response.status}`;
-
-    if (trimmed.startsWith("{")) {
-      try {
-        const data = JSON.parse(trimmed) as { error?: { message?: string } };
-        message = data.error?.message ?? message;
-      } catch {
-        // ignore
-      }
-    }
-
-    throw new Error(message);
+    throw new AppError(API_ERROR_CODES.AI_UNAVAILABLE, 502);
   }
 
   const data = JSON.parse(trimmed) as ImageApiResponse;
@@ -75,9 +63,7 @@ export async function generateArticleImage(
     (image?.b64_json ? `data:image/png;base64,${image.b64_json}` : null);
 
   if (!url) {
-    throw new Error(
-      `Модель ${model} не вернула изображение. Проверьте OPENROUTER_API_KEY в .env.local`,
-    );
+    throw new AppError(API_ERROR_CODES.AI_UNAVAILABLE, 502);
   }
 
   return {

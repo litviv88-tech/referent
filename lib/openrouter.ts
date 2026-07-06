@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { API_ERROR_CODES, AppError } from "./errors";
 
 function sanitizeApiKey(raw: string): string {
   let key = raw.trim();
@@ -17,9 +18,7 @@ export function getOpenRouterApiKey(): string {
   const apiKey = sanitizeApiKey(raw);
 
   if (!apiKey || apiKey.includes("...") || apiKey.length < 20) {
-    throw new Error(
-      "Укажите OPENROUTER_API_KEY в .env.local только ключом, без export: OPENROUTER_API_KEY=sk-or-v1-...",
-    );
+    throw new AppError(API_ERROR_CODES.MISSING_API_KEY, 500);
   }
 
   return apiKey;
@@ -64,22 +63,11 @@ export async function openRouterFetch<T>(
   const trimmed = text.trim();
 
   if (!response.ok) {
-    let message = `OpenRouter: HTTP ${response.status}`;
-
-    if (trimmed.startsWith("{")) {
-      try {
-        const data = JSON.parse(trimmed) as { error?: { message?: string } };
-        message = data.error?.message ?? message;
-      } catch {
-        // ignore parse error
-      }
-    }
-
-    throw new Error(message);
+    throw new AppError(API_ERROR_CODES.AI_UNAVAILABLE, 502);
   }
 
   if (!trimmed) {
-    throw new Error("OpenRouter вернул пустой ответ.");
+    throw new AppError(API_ERROR_CODES.AI_UNAVAILABLE, 502);
   }
 
   return JSON.parse(trimmed) as T;
