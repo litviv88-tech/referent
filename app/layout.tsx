@@ -1,9 +1,8 @@
-import type { Metadata } from "next";
-import "./globals.css";
+﻿import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Referent",
-  description: "Анализ англоязычных и русскоязычных статей с помощью AI",
+  description: "Минимальное приложение на Next.js",
 };
 
 export default function RootLayout({
@@ -13,7 +12,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru">
-      <body className="overflow-x-hidden antialiased text-slate-900">
+      <body style={{ fontFamily: "system-ui, sans-serif", margin: 0 }}>
         {children}
       </body>
     </html>
