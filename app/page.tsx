@@ -8,7 +8,7 @@ export default function Home() {
         justifyContent: "center",
       }}
     >
-      <h1>Это минимальное приложение на Next.js.</h1>
+      <h1>Я изучаю Next.js.</h1>
     </main>
   );
 }
