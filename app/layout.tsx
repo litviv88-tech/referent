@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Referent",
-  description: "Минимальное приложение на Next.js",
+  description: "Парсинг англоязычных статей",
 };
 
 export default function RootLayout({
@@ -12,9 +13,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru">
-      <body style={{ fontFamily: "system-ui, sans-serif", margin: 0 }}>
-        {children}
-      </body>
+      <body className="bg-gray-50 text-gray-900 antialiased">{children}</body>
     </html>
   );
 }
