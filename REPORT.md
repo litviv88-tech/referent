@@ -24,6 +24,8 @@
 
 ## Ссылка на Vercel
 
-https://referent-henna.vercel.app
+https://referent-alex3333.vercel.app
 
-Production: https://referent-alex3333.vercel.app
+Публичный домен: https://referent-henna.vercel.app
+
+Деплой: https://referent-jnuexwudc-alex3333.vercel.app
