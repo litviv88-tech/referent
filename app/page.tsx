@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AlertCircle, Check, Copy, Eraser } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import ThemeToggle from "@/components/theme-toggle";
 import type { AppErrorCode } from "@/lib/errors";
 import { friendlyMessage } from "@/lib/errors";
 
@@ -135,10 +136,7 @@ export default function Home() {
   }
 
   async function handleCopy() {
-    const textToCopy = [
-      activeAction === "translate" ? title : null,
-      body,
-    ]
+    const textToCopy = [activeAction === "translate" ? title : null, body]
       .filter(Boolean)
       .join("\n\n");
 
@@ -172,14 +170,43 @@ export default function Home() {
     resultRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [showResult, result, error]);
 
+  const processStyle =
+    processState === "loading"
+      ? {
+          borderColor: "var(--process-loading-border)",
+          background: "var(--process-loading-bg)",
+          color: "var(--process-loading-fg)",
+        }
+      : processState === "error"
+        ? {
+            borderColor: "var(--process-error-border)",
+            background: "var(--process-error-bg)",
+            color: "var(--process-error-fg)",
+          }
+        : processState === "done"
+          ? {
+              borderColor: "var(--process-done-border)",
+              background: "var(--process-done-bg)",
+              color: "var(--process-done-fg)",
+            }
+          : {
+              borderColor: "var(--process-idle-border)",
+              background: "var(--process-idle-bg)",
+              color: "var(--process-idle-fg)",
+            };
+
   return (
     <main className="min-h-screen flex flex-col items-stretch px-4 py-6 sm:px-6 sm:py-8 md:py-10">
       <div className="mx-auto w-full max-w-2xl flex flex-col gap-5 sm:gap-6">
+        <div className="flex justify-end">
+          <ThemeToggle />
+        </div>
+
         <header className="space-y-2 text-center">
-          <h1 className="text-2xl sm:text-3xl font-bold break-words">
+          <h1 className="text-2xl sm:text-3xl font-bold break-words text-[var(--fg)]">
             Referent
           </h1>
-          <p className="text-sm sm:text-base text-gray-500 break-words px-1">
+          <p className="text-sm sm:text-base text-[var(--muted)] break-words px-1">
             Вставьте ссылку на англоязычную статью и выберите действие
           </p>
         </header>
@@ -194,7 +221,7 @@ export default function Home() {
               handleAction("summary");
             }
           }}
-          className="w-full rounded-lg border border-gray-300 px-4 py-3 text-base sm:text-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+          className="w-full rounded-lg border border-[var(--border)] bg-[var(--input-bg)] text-[var(--fg)] px-4 py-3 text-base sm:text-lg outline-none transition focus:ring-2 focus:ring-[var(--btn)]/30"
         />
 
         <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:justify-center">
@@ -205,7 +232,7 @@ export default function Home() {
               title={ACTION_TITLES[key]}
               onClick={() => handleAction(key)}
               disabled={loading || !url.trim()}
-              className="w-full md:w-auto rounded-lg bg-blue-600 px-5 py-2.5 text-white font-medium hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
+              className="w-full md:w-auto rounded-lg bg-[var(--btn)] px-5 py-2.5 text-[var(--btn-fg)] font-medium hover:bg-[var(--btn-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition"
             >
               {ACTION_LABELS[key]}
             </button>
@@ -215,7 +242,7 @@ export default function Home() {
             title="Сбросить URL, результат, ошибки и состояние"
             onClick={handleClear}
             disabled={loading}
-            className="w-full md:w-auto inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-gray-800 font-medium hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+            className="w-full md:w-auto inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--btn-secondary-bg)] px-5 py-2.5 text-[var(--fg)] font-medium hover:bg-[var(--btn-secondary-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition"
           >
             <Eraser className="size-4" aria-hidden />
             Очистить
@@ -224,14 +251,9 @@ export default function Home() {
 
         <div
           className={`rounded-lg border px-4 py-3 text-sm break-words ${
-            processState === "loading"
-              ? "border-blue-200 bg-blue-50 text-blue-800 animate-pulse"
-              : processState === "error"
-                ? "border-red-200 bg-red-50 text-red-700"
-                : processState === "done"
-                  ? "border-green-200 bg-green-50 text-green-800"
-                  : "border-gray-200 bg-gray-50 text-gray-500"
+            processState === "loading" ? "animate-pulse" : ""
           }`}
+          style={processStyle}
           aria-live="polite"
         >
           <p className="font-medium">Текущий процесс</p>
@@ -249,16 +271,16 @@ export default function Home() {
                 </AlertDescription>
               </Alert>
             ) : (
-              <section className="rounded-lg border border-gray-200 bg-white p-4 sm:p-5 min-h-[120px] flex flex-col gap-4 overflow-x-hidden">
+              <section className="rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] p-4 sm:p-5 min-h-[120px] flex flex-col gap-4 overflow-x-hidden">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+                  <h2 className="text-sm font-semibold uppercase tracking-wide text-[var(--muted)]">
                     Результат
                   </h2>
                   <button
                     type="button"
                     title="Скопировать результат в буфер обмена"
                     onClick={handleCopy}
-                    className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 transition"
+                    className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg border border-[var(--border)] px-4 py-2 text-sm font-medium text-[var(--fg)] hover:bg-[var(--btn-secondary-hover)] transition"
                   >
                     {copied ? (
                       <Check className="size-4 text-green-600" aria-hidden />
@@ -270,22 +292,22 @@ export default function Home() {
                 </div>
 
                 {activeAction === "translate" && title && (
-                  <h3 className="text-lg sm:text-xl font-semibold leading-snug break-words">
+                  <h3 className="text-lg sm:text-xl font-semibold leading-snug break-words text-[var(--fg)]">
                     {title}
                   </h3>
                 )}
                 {activeAction === "translate" && result?.date && (
-                  <p className="text-sm text-gray-500 break-words">
+                  <p className="text-sm text-[var(--muted)] break-words">
                     {result.date}
                   </p>
                 )}
                 {activeAction && activeAction !== "translate" && (
-                  <p className="text-sm font-medium text-gray-500 break-words">
+                  <p className="text-sm font-medium text-[var(--muted)] break-words">
                     {ACTION_LABELS[activeAction]}
                   </p>
                 )}
                 {body && (
-                  <div className="whitespace-pre-wrap break-words text-sm leading-relaxed">
+                  <div className="whitespace-pre-wrap break-words text-sm leading-relaxed text-[var(--fg)]">
                     {body}
                   </div>
                 )}

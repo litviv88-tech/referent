@@ -1,1 +1,115 @@
 @import "tailwindcss";
+
+:root {
+  --bg: #f7f3eb;
+  --bg-elevated: #fffcf7;
+  --fg: #2c241c;
+  --muted: #6b5e52;
+  --border: #e2d6c6;
+  --input-bg: #fffcf7;
+  --btn: #5c4a3a;
+  --btn-hover: #46362a;
+  --btn-fg: #fffaf3;
+  --btn-secondary-bg: #fffcf7;
+  --btn-secondary-hover: #f0e8dc;
+  --process-idle-bg: #efe7db;
+  --process-idle-fg: #6b5e52;
+  --process-idle-border: #e2d6c6;
+  --process-loading-bg: #ebe2d4;
+  --process-loading-fg: #4a3b2e;
+  --process-loading-border: #d4c4b0;
+  --process-done-bg: #e8efe4;
+  --process-done-fg: #35523a;
+  --process-done-border: #c5d6c0;
+  --process-error-bg: #f5e6e0;
+  --process-error-fg: #7a3d32;
+  --process-error-border: #e4c4ba;
+  --clipping: rgba(80, 60, 40, 0.045);
+  --clipping-line: rgba(80, 60, 40, 0.035);
+}
+
+html.dark {
+  --bg: #2a211a;
+  --bg-elevated: #352920;
+  --fg: #f0e6d8;
+  --muted: #b8a794;
+  --border: #4a3b2e;
+  --input-bg: #31261e;
+  --btn: #c4a484;
+  --btn-hover: #d4b696;
+  --btn-fg: #2a211a;
+  --btn-secondary-bg: #352920;
+  --btn-secondary-hover: #403328;
+  --process-idle-bg: #31261e;
+  --process-idle-fg: #b8a794;
+  --process-idle-border: #4a3b2e;
+  --process-loading-bg: #3a2e24;
+  --process-loading-fg: #e8d5bb;
+  --process-loading-border: #5a4636;
+  --process-done-bg: #2e372a;
+  --process-done-fg: #c5d6b8;
+  --process-done-border: #45553c;
+  --process-error-bg: #3a2824;
+  --process-error-fg: #e8b8ae;
+  --process-error-border: #5a3c36;
+  --clipping: rgba(230, 210, 180, 0.04);
+  --clipping-line: rgba(230, 210, 180, 0.03);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-input-bg: var(--input-bg);
+  --color-btn: var(--btn);
+  --color-btn-hover: var(--btn-hover);
+  --color-btn-fg: var(--btn-fg);
+  --color-btn-secondary-bg: var(--btn-secondary-bg);
+  --color-btn-secondary-hover: var(--btn-secondary-hover);
+}
+
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--fg);
+}
+
+/* Едва заметные «газетные» вырезки на фоне */
+.newspaper-bg {
+  position: relative;
+  isolation: isolate;
+}
+
+.newspaper-bg::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 1;
+  background-color: var(--bg);
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='200' viewBox='0 0 280 200'%3E%3Cg fill='none' stroke='%23000' stroke-opacity='0.07'%3E%3Crect x='12' y='18' width='110' height='90' rx='2'/%3E%3Cpath d='M22 34h90M22 44h78M22 54h86M22 64h70M22 74h82M22 84h60'/%3E%3Crect x='150' y='40' width='100' height='120' rx='2' transform='rotate(-6 200 100)'/%3E%3Cpath d='M160 58h70M160 70h62M160 82h68M160 94h55M160 106h66M160 118h48' transform='rotate(-6 200 100)'/%3E%3C/g%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='240' viewBox='0 0 320 240'%3E%3Cg fill='none' stroke='%23000' stroke-opacity='0.055'%3E%3Crect x='40' y='30' width='130' height='100' rx='2' transform='rotate(5 105 80)'/%3E%3Cpath d='M52 50h100M52 62h88M52 74h96M52 86h76M52 98h90' transform='rotate(5 105 80)'/%3E%3Crect x='190' y='100' width='95' height='85' rx='2' transform='rotate(-4 237 142)'/%3E%3Cpath d='M200 118h70M200 130h60M200 142h66M200 154h52' transform='rotate(-4 237 142)'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 420px 300px, 480px 360px;
+  background-position: 8% 12%, 78% 62%;
+  background-repeat: repeat;
+  mix-blend-mode: multiply;
+}
+
+html.dark .newspaper-bg::before {
+  mix-blend-mode: soft-light;
+  opacity: 0.85;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='200' viewBox='0 0 280 200'%3E%3Cg fill='none' stroke='%23fff' stroke-opacity='0.09'%3E%3Crect x='12' y='18' width='110' height='90' rx='2'/%3E%3Cpath d='M22 34h90M22 44h78M22 54h86M22 64h70M22 74h82M22 84h60'/%3E%3Crect x='150' y='40' width='100' height='120' rx='2' transform='rotate(-6 200 100)'/%3E%3Cpath d='M160 58h70M160 70h62M160 82h68M160 94h55M160 106h66M160 118h48' transform='rotate(-6 200 100)'/%3E%3C/g%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='240' viewBox='0 0 320 240'%3E%3Cg fill='none' stroke='%23fff' stroke-opacity='0.07'%3E%3Crect x='40' y='30' width='130' height='100' rx='2' transform='rotate(5 105 80)'/%3E%3Cpath d='M52 50h100M52 62h88M52 74h96M52 86h76M52 98h90' transform='rotate(5 105 80)'/%3E%3Crect x='190' y='100' width='95' height='85' rx='2' transform='rotate(-4 237 142)'/%3E%3Cpath d='M200 118h70M200 130h60M200 142h66M200 154h52' transform='rotate(-4 237 142)'/%3E%3C/g%3E%3C/svg%3E");
+}

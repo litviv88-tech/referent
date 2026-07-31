@@ -6,14 +6,28 @@ export const metadata: Metadata = {
   description: "Парсинг англоязычных статей",
 };
 
+const themeInitScript = `
+(function(){
+  try {
+    var t = localStorage.getItem('referent-theme');
+    if (t === 'dark') document.documentElement.classList.add('dark');
+  } catch (e) {}
+})();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru">
-      <body className="bg-gray-50 text-gray-900 antialiased">{children}</body>
+    <html lang="ru" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
+      <body className="newspaper-bg antialiased text-[var(--fg)]">
+        {children}
+      </body>
     </html>
   );
 }
