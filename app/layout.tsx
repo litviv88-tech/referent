@@ -11,6 +11,9 @@ const themeInitScript = `
   try {
     var t = localStorage.getItem('referent-theme');
     if (t === 'dark') document.documentElement.classList.add('dark');
+    if (localStorage.getItem('referent-clippings') === '1') {
+      document.documentElement.classList.add('clippings-on');
+    }
   } catch (e) {}
 })();
 `;

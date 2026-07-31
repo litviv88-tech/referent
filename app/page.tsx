@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { AlertCircle, Check, Copy, Eraser } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import ThemeToggle from "@/components/theme-toggle";
+import NewspaperToggle from "@/components/newspaper-toggle";
 import type { AppErrorCode } from "@/lib/errors";
 import { friendlyMessage } from "@/lib/errors";
 
@@ -196,7 +197,8 @@ export default function Home() {
             };
 
   return (
-    <main className="min-h-screen flex flex-col items-stretch px-4 py-6 sm:px-6 sm:py-8 md:py-10">
+    <main className="min-h-screen flex flex-col items-stretch px-4 py-6 sm:px-6 sm:py-8 md:py-10 pb-20">
+      <NewspaperToggle />
       <div className="mx-auto w-full max-w-2xl flex flex-col gap-5 sm:gap-6">
         <div className="flex justify-end">
           <ThemeToggle />

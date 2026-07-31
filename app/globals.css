@@ -83,7 +83,7 @@ body {
   color: var(--fg);
 }
 
-/* Едва заметные «газетные» вырезки на фоне */
+/* Едва заметный SVG-паттерн (по умолчанию) */
 .newspaper-bg {
   position: relative;
   isolation: isolate;
@@ -112,4 +112,20 @@ html.dark .newspaper-bg::before {
   background-image:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='200' viewBox='0 0 280 200'%3E%3Cg fill='none' stroke='%23fff' stroke-opacity='0.09'%3E%3Crect x='12' y='18' width='110' height='90' rx='2'/%3E%3Cpath d='M22 34h90M22 44h78M22 54h86M22 64h70M22 74h82M22 84h60'/%3E%3Crect x='150' y='40' width='100' height='120' rx='2' transform='rotate(-6 200 100)'/%3E%3Cpath d='M160 58h70M160 70h62M160 82h68M160 94h55M160 106h66M160 118h48' transform='rotate(-6 200 100)'/%3E%3C/g%3E%3C/svg%3E"),
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='240' viewBox='0 0 320 240'%3E%3Cg fill='none' stroke='%23fff' stroke-opacity='0.07'%3E%3Crect x='40' y='30' width='130' height='100' rx='2' transform='rotate(5 105 80)'/%3E%3Cpath d='M52 50h100M52 62h88M52 74h96M52 86h76M52 98h90' transform='rotate(5 105 80)'/%3E%3Crect x='190' y='100' width='95' height='85' rx='2' transform='rotate(-4 237 142)'/%3E%3Cpath d='M200 118h70M200 130h60M200 142h66M200 154h52' transform='rotate(-4 237 142)'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Фото-коллаж газетных вырезок (включается кнопкой) */
+html.clippings-on .newspaper-bg::before {
+  background-color: var(--bg);
+  background-image: url("/newspaper-bg.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.22;
+  mix-blend-mode: multiply;
+}
+
+html.dark.clippings-on .newspaper-bg::before {
+  opacity: 0.28;
+  mix-blend-mode: soft-light;
 }
