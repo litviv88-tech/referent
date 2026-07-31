@@ -1,4 +1,5 @@
 import * as cheerio from "cheerio";
+import { AppError } from "@/lib/errors";
 
 export type ParsedArticle = {
   date: string;
@@ -6,16 +7,37 @@ export type ParsedArticle = {
   content: string;
 };
 
+const FETCH_TIMEOUT_MS = 15000;
+
 export async function parseArticle(url: string): Promise<ParsedArticle> {
-  const html = await fetch(url, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
-    },
-  }).then((r) => {
-    if (!r.ok) throw new Error(`Не удалось загрузить страницу: ${r.status}`);
-    return r.text();
-  });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+      },
+    });
+  } catch {
+    throw new AppError("ARTICLE_FETCH_FAILED", 502);
+  } finally {
+    clearTimeout(timer);
+  }
+
+  if (!response.ok) {
+    throw new AppError("ARTICLE_FETCH_FAILED", 502);
+  }
+
+  let html: string;
+  try {
+    html = await response.text();
+  } catch {
+    throw new AppError("ARTICLE_FETCH_FAILED", 502);
+  }
 
   const $ = cheerio.load(html);
 
@@ -37,7 +59,9 @@ export async function parseArticle(url: string): Promise<ParsedArticle> {
   const contentEl =
     $("article").first().length > 0
       ? $("article").first()
-      : $(".post-content, .post-body, .entry-content, .article-body, .content, .story-body, main").first();
+      : $(
+          ".post-content, .post-body, .entry-content, .article-body, .content, .story-body, main"
+        ).first();
 
   let content = "";
   if (contentEl.length > 0) {
@@ -55,6 +79,10 @@ export async function parseArticle(url: string): Promise<ParsedArticle> {
       .get()
       .filter((t) => t.length > 20)
       .join("\n\n");
+  }
+
+  if (!content.trim()) {
+    throw new AppError("ARTICLE_EMPTY", 422);
   }
 
   return { date, title, content };

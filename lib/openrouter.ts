@@ -1,3 +1,5 @@
+import { AppError } from "@/lib/errors";
+
 const MODEL = "deepseek/deepseek-chat";
 const MAX_CONTENT_LENGTH = 12000;
 
@@ -11,9 +13,7 @@ function getConfig() {
   const baseUrl = process.env.OPENAI_BASE_URL ?? "https://openrouter.ai/api/v1";
 
   if (!apiKey || apiKey === "your_api_key_here") {
-    throw new Error(
-      "OPENROUTER_API_KEY не задан. Добавьте ключ в .env.local"
-    );
+    throw new AppError("AI_NOT_CONFIGURED", 503);
   }
 
   return { apiKey, baseUrl };
@@ -44,27 +44,31 @@ async function chatCompletion(
     body.response_format = { type: "json_object" };
   }
 
-  const response = await fetch(`${baseUrl}/chat/completions`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-      "HTTP-Referer": "https://referent-alex3333.vercel.app",
-      "X-Title": "Referent",
-    },
-    body: JSON.stringify(body),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://referent-alex3333.vercel.app",
+        "X-Title": "Referent",
+      },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    throw new AppError("AI_FAILED", 502);
+  }
 
   if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`OpenRouter API: ${response.status} ${err}`);
+    throw new AppError("AI_FAILED", 502);
   }
 
   const data = await response.json();
   const content = data.choices?.[0]?.message?.content;
 
   if (!content || typeof content !== "string") {
-    throw new Error("OpenRouter не вернул ответ");
+    throw new AppError("AI_FAILED", 502);
   }
 
   return content;
@@ -84,11 +88,11 @@ export async function translateArticle(
   try {
     parsed = JSON.parse(raw);
   } catch {
-    throw new Error("Не удалось разобрать ответ переводчика");
+    throw new AppError("AI_FAILED", 502);
   }
 
   if (!parsed.titleRu || !parsed.contentRu) {
-    throw new Error("OpenRouter вернул неполный перевод");
+    throw new AppError("AI_FAILED", 502);
   }
 
   return { titleRu: parsed.titleRu, contentRu: parsed.contentRu };
