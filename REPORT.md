@@ -8,9 +8,9 @@ https://github.com/litviv88-tech/yaroslav
 
 ## Ссылка на Vercel
 
-https://referent-henna.vercel.app
+https://referent-alex3333.vercel.app
 
-Production: https://referent-alex3333.vercel.app
+Публичный домен: https://referent-henna.vercel.app
 
 ## Что сделано
 
@@ -28,6 +28,11 @@ Production: https://referent-alex3333.vercel.app
 ### Адаптив
 - Мобильный (~375–430px): кнопки столбиком, `px-4`, текст с `break-words`.
 - Планшет (~768px) и десктоп: кнопки в строку (`md:flex-row`).
+
+### Темы
+- Светлая тема: бежевый фон.
+- Тёмная тема: коричневатый оттенок.
+- На фоне — едва заметные газетные вырезки.
 
 ### Улучшение по выбору
 Добавлен запуск **«О чём статья?»** по клавише **Enter** в поле URL и визуальный отклик **«Скопировано»** после копирования.

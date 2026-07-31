@@ -1,31 +1,31 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #f7f3eb;
-  --bg-elevated: #fffcf7;
+  --bg: #efe6d6;
+  --bg-elevated: #f6eddf;
   --fg: #2c241c;
   --muted: #6b5e52;
-  --border: #e2d6c6;
-  --input-bg: #fffcf7;
+  --border: #d9cbb6;
+  --input-bg: #f8f0e4;
   --btn: #5c4a3a;
   --btn-hover: #46362a;
   --btn-fg: #fffaf3;
-  --btn-secondary-bg: #fffcf7;
-  --btn-secondary-hover: #f0e8dc;
-  --process-idle-bg: #efe7db;
+  --btn-secondary-bg: #f4ebdc;
+  --btn-secondary-hover: #e8dcc8;
+  --process-idle-bg: #e8dcc8;
   --process-idle-fg: #6b5e52;
-  --process-idle-border: #e2d6c6;
-  --process-loading-bg: #ebe2d4;
+  --process-idle-border: #d9cbb6;
+  --process-loading-bg: #e4d7c2;
   --process-loading-fg: #4a3b2e;
-  --process-loading-border: #d4c4b0;
-  --process-done-bg: #e8efe4;
+  --process-loading-border: #cdb89e;
+  --process-done-bg: #e4ebe0;
   --process-done-fg: #35523a;
   --process-done-border: #c5d6c0;
-  --process-error-bg: #f5e6e0;
+  --process-error-bg: #f0ddd6;
   --process-error-fg: #7a3d32;
-  --process-error-border: #e4c4ba;
-  --clipping: rgba(80, 60, 40, 0.045);
-  --clipping-line: rgba(80, 60, 40, 0.035);
+  --process-error-border: #e0c0b4;
+  --clipping: rgba(80, 60, 40, 0.05);
+  --clipping-line: rgba(80, 60, 40, 0.04);
 }
 
 html.dark {
