@@ -1,6 +1,16 @@
-# Отчёт: ошибки, UX и адаптив
+# Отчёт: проект «Ярослав»
 
 Дата: 31 июля 2026
+
+## Репозиторий GitHub
+
+https://github.com/litviv88-tech/yaroslav
+
+## Ссылка на Vercel
+
+https://referent-henna.vercel.app
+
+Production: https://referent-alex3333.vercel.app
 
 ## Что сделано
 
@@ -21,11 +31,3 @@
 
 ### Улучшение по выбору
 Добавлен запуск **«О чём статья?»** по клавише **Enter** в поле URL и визуальный отклик **«Скопировано»** после копирования.
-
-## Ссылка на Vercel
-
-https://referent-alex3333.vercel.app
-
-Публичный домен: https://referent-henna.vercel.app
-
-Деплой: https://referent-jnuexwudc-alex3333.vercel.app
